@@ -1,0 +1,26 @@
+{
+    "manifest_version": 3,
+    "name": "WesternRMP",
+    "description": "RMP extension for Western University's DraftMySchedule.",
+    "version": "1.3.0",
+    "icons": { "128": "assets/icon128.png" },
+    "permissions": [
+        "activeTab", 
+        "webRequest"
+    ],
+    "host_permissions": [
+        "https://draftmyschedule.uwo.ca/*", 
+        "https://www.ratemyprofessors.com/*"
+    ],
+    "optional_permissions": ["webNavigation", "tabs"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "event_page": "event.html",
+    "content_scripts": [
+      {
+        "matches": ["https://draftmyschedule.uwo.ca/*"],
+        "js": ["content.js"]
+      }
+    ]
+  }
