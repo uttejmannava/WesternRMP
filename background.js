@@ -9,7 +9,7 @@ const isGraphQLReachable = async () => {
     } catch (error) {
       return false;
     }
-  };
+};
 
 
 const searchProfessor = async (professorName, schoolId, professorDepartment) => {
@@ -69,34 +69,114 @@ const searchProfessor = async (professorName, schoolId, professorDepartment) => 
         }
     }`;
     
-    const response = await fetch(GRAPHQL_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `${AUTH_TOKEN}`,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            query: query,
-            variables: {
-                query: {
-                    text: convertProfessorName(professorName),
-                    schoolId: schoolId
+    try {
+        console.log(`Searching for professor: ${professorName} in ${professorDepartment}`);
+        
+        const response = await fetch(GRAPHQL_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': AUTH_TOKEN,
+                'Accept': 'application/json',
+                'Origin': 'https://www.ratemyprofessors.com'
+            },
+            body: JSON.stringify({
+                query: query,
+                variables: {
+                    query: {
+                        text: convertProfessorName(professorName),
+                        schoolId: schoolId
+                    }
                 }
-            }
-        })
-    }).then(response => response.json()).catch(error => {
+            })
+        });
+        
+        if (!response.ok) {
+            console.error(`API request failed with status: ${response.status}`);
+            return null;
+        }
+        
+        const data = await response.json();
+        console.log("API response:", data);
+        
+        if (!data || !data.data) {
+            console.error('API response missing data property:', data);
+            return null;
+        }
+        
+        if (!data.data.newSearch || !data.data.newSearch.teachers) {
+            console.error('API response missing newSearch.teachers:', data.data);
+            return null;
+        }
+        
+        const edges = data.data.newSearch.teachers.edges;
+        
+        if (edges.length === 0) {
+            console.log(`No results found for professor: ${professorName}`);
+            return null;
+        }
+        
+        const professor = filterProfessorResults(edges, convertProfessorName(professorName), professorDepartment);
+        console.log(`Found professor data:`, professor);
+        return professor;
+    } catch (error) {
         console.error('Error searching for professor:', error);
         return null;
-    });
-
-    const edges = response.data.newSearch.teachers.edges;
-    
-    // if no results, return null
-    if (edges.length === 0) {
-        return null;
     }
+};
 
-    const professor = filterProfessorResults(edges, convertProfessorName(professorName), professorDepartment);
-    return professor;
-}
+
+chrome.runtime.onMessage.addListener((message, sendResponse) => {
+    console.log("Background received message:", message);
+    
+    if (message.action === "searchProfessor") {
+        const { professorName, schoolId, department } = message;
+        console.log(`Processing search request for: ${professorName}, department: ${department}`); // debug
+        
+        if (!professorName) {
+            console.error("Missing professor name in request");
+            sendResponse({ success: false, error: "Professor name is required" });
+            return true;
+        }
+        
+        searchProfessor(professorName, schoolId, department)
+            .then(professorData => {
+                if (professorData) {
+                    console.log(`Sending successful response for ${professorName}`);
+                    sendResponse({ success: true, professor: professorData });
+                } else {
+                    console.log(`Professor not found: ${professorName}`);
+                    sendResponse({ 
+                        success: false, 
+                        error: "Professor not found",
+                        searchTerm: professorName,
+                        convertedName: convertProfessorName(professorName)
+                    });
+                }
+            })
+            .catch(error => {
+                console.error(`Error in searchProfessor for ${professorName}:`, error);
+                sendResponse({ 
+                    success: false, 
+                    error: "Error searching for professor: " + error.message 
+                });
+            });
+        
+        return true; // Return true to indicate we'll send a response asynchronously
+    }
+    
+    return false;
+});
+
+// Test the API on background script load
+(async () => {
+    console.log("Testing API connection...");
+    try {
+        const testResult = await searchProfessor("K. Linton", UWO_SCHOOL_ID, "Anthropology");
+        console.log("Test API result:", testResult);
+    } catch (error) {
+        console.error("Test API error:", error);
+    }
+})();
+
+console.log("Background script loaded, listening.");
