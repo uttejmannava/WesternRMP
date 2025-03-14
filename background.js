@@ -1,5 +1,5 @@
 import { GRAPHQL_URL, UWO_SCHOOL_ID, AUTH_TOKEN } from "./constants.js";
-
+import { convertProfessorName } from './utils/inputfiltering.js';
 
 const isGraphQLReachable = async () => {
     try {
@@ -11,7 +11,7 @@ const isGraphQLReachable = async () => {
   };
 
 
-const searchProfessor = async (namePattern, schoolId) => {
+const searchProfessor = async (professorName, schoolId, professorDepartment) => {
     const query = `query NewSearchTeachersQuery(
     $query: TeacherSearchQuery!) {
         newSearch {
@@ -79,9 +79,8 @@ const searchProfessor = async (namePattern, schoolId) => {
             query: query,
             variables: {
                 query: {
-                    text: namePattern,
+                    text: convertProfessorName(professorName),
                     schoolId: schoolId
-                    
                 }
             }
         })
@@ -90,5 +89,16 @@ const searchProfessor = async (namePattern, schoolId) => {
         return null;
     });
 
-    return response.data.newSearch.teachers.edges;
+    const edges = response.data.newSearch.teachers.edges;
+    
+    // if no results, return null
+    if (edges.length === 0) {
+        return null;
+    }
+
+    const professor = response.data.newSearch.teachers.edges[0].node;
+    
+    
+
+    return professor;
 }
