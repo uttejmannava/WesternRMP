@@ -1,5 +1,6 @@
 import { GRAPHQL_URL, UWO_SCHOOL_ID, AUTH_TOKEN } from "./constants.js";
 import { convertProfessorName } from './utils/inputfiltering.js';
+import { filterProfessorResults } from './utils/outputfiltering.js';
 
 const isGraphQLReachable = async () => {
     try {
@@ -96,9 +97,6 @@ const searchProfessor = async (professorName, schoolId, professorDepartment) => 
         return null;
     }
 
-    const professor = response.data.newSearch.teachers.edges[0].node;
-    
-    
-
+    const professor = filterProfessorResults(edges, convertProfessorName(professorName), professorDepartment);
     return professor;
 }
