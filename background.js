@@ -12,7 +12,7 @@ const isGraphQLReachable = async () => {
 };
 
 
-const searchProfessor = async (professorName, schoolId, professorDepartment) => {
+const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professorDepartment) => {
     const query = `query NewSearchTeachersQuery(
     $query: TeacherSearchQuery!) {
         newSearch {
@@ -85,7 +85,7 @@ const searchProfessor = async (professorName, schoolId, professorDepartment) => 
                 variables: {
                     query: {
                         text: convertProfessorName(professorName),
-                        schoolId: schoolId
+                        schoolID: schoolId
                     }
                 }
             })
@@ -130,7 +130,7 @@ chrome.runtime.onMessage.addListener((message, sendResponse) => {
     console.log("Background received message:", message);
     
     if (message.action === "searchProfessor") {
-        const { professorName, schoolId, department } = message;
+        const { professorName, schoolId = UWO_SCHOOL_ID, department } = message;
         console.log(`Processing search request for: ${professorName}, department: ${department}`); // debug
         
         if (!professorName) {
