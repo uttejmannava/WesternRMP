@@ -120,7 +120,7 @@ async function displayProfessorRating(professorCell, professorName, department) 
         tooltip.style.bottom = '100%';
         tooltip.style.left = '50%';
         tooltip.style.transform = 'translateX(-50%)';
-        tooltip.style.width = '300px';
+        tooltip.style.width = '350px';
         tooltip.style.backgroundColor = 'white';
         tooltip.style.border = '1px solid #ccc';
         tooltip.style.borderRadius = '4px';
@@ -132,7 +132,7 @@ async function displayProfessorRating(professorCell, professorName, department) 
         
         // format professor data for tooltip
         const fullName = `${data.firstName} ${data.lastName}`;
-        const professorId = atob(data.id).split('-')[1]; // decode base64 string and remove prefix
+        const professorId = data.legacyId;
         const professorLink = `https://www.ratemyprofessors.com/professor/${professorId}`;
         const avgRating = data.avgRatingRounded.toFixed(2) || 'N/A';
         const numRatings = data.numRatings || 0;
@@ -193,7 +193,7 @@ async function displayProfessorRating(professorCell, professorName, department) 
                 </div>
                 ${tagsHTML}
                 <div class="most-useful" style="margin-top:10px; border-top:1px solid #eee; padding-top:8px;">
-                    <h4 style="margin:0 0 6px 0; font-size:14px;">Most Helpful Rating</h4>
+                    <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:bold; color:#2196F3; border-bottom:1px solid #e0e0e0; padding-bottom:4px;">Most Helpful Rating</h4>
                     ${mostUsefulRatingHTML}
                 </div>
             </div>
