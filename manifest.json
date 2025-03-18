@@ -1,12 +1,11 @@
 {
     "manifest_version": 3,
     "name": "WesternRMP",
-    "description": "RMP extension for Western University's DraftMySchedule.",
+    "description": "See RateMyProfessors.com ratings in UWO's DraftMySchedule.",
     "version": "1.0",
     "icons": { "128": "assets/icon128.png" },
     "permissions": [
-        "activeTab", 
-        "webRequest"
+        "activeTab"
     ],
     "host_permissions": [
         "https://draftmyschedule.uwo.ca/*", 

@@ -1,5 +1,5 @@
 import { GRAPHQL_URL, UWO_SCHOOL_ID, AUTH_TOKEN } from "./constants.js";
-import { convertProfessorName } from './utils/inputfiltering.js';
+import { convertProfessorName, encodeToBase64 } from './utils/inputfiltering.js';
 import { filterProfessorResults } from './utils/outputfiltering.js';
 
 const isGraphQLReachable = async () => {
@@ -12,7 +12,7 @@ const isGraphQLReachable = async () => {
 };
 
 
-const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professorDepartment) => {
+const searchProfessor = async (professorName, schoolID, targetDepartment) => {
     const query = `query NewSearchTeachersQuery(
     $query: TeacherSearchQuery!) {
         newSearch {
@@ -70,7 +70,7 @@ const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professo
     }`;
     
     try {
-        console.log(`Searching for professor: ${professorName} in ${professorDepartment}`);
+        console.log(`Searching for professor: ${professorName} in ${targetDepartment}`);
         
         const response = await fetch(GRAPHQL_URL, {
             method: 'POST',
@@ -85,7 +85,7 @@ const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professo
                 variables: {
                     query: {
                         text: convertProfessorName(professorName),
-                        schoolID: schoolId
+                        schoolID: schoolID
                     }
                 }
             })
@@ -97,7 +97,6 @@ const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professo
         }
         
         const data = await response.json();
-        console.log("API response:", data);
         
         if (!data || !data.data) {
             console.error('API response missing data property:', data);
@@ -110,15 +109,17 @@ const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professo
         }
         
         const edges = data.data.newSearch.teachers.edges;
+        console.log("API response:", edges);
         
         if (edges.length === 0) {
             console.log(`No results found for professor: ${professorName}`);
             return null;
         }
         
-        const professor = filterProfessorResults(edges, convertProfessorName(professorName), professorDepartment);
+        const professor = filterProfessorResults(edges, convertProfessorName(professorName), targetDepartment);
         console.log(`Found professor data:`, professor);
         return professor;
+
     } catch (error) {
         console.error('Error searching for professor:', error);
         return null;
@@ -126,12 +127,12 @@ const searchProfessor = async (professorName, schoolId = UWO_SCHOOL_ID, professo
 };
 
 
-chrome.runtime.onMessage.addListener((message, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Background received message:", message);
     
     if (message.action === "searchProfessor") {
-        const { professorName, schoolId = UWO_SCHOOL_ID, department } = message;
-        console.log(`Processing search request for: ${professorName}, department: ${department}`); // debug
+        const { professorName, schoolID = encodeToBase64(UWO_SCHOOL_ID), department } = message;
+        console.log(`Processing search request for: ${professorName}, department: ${department}`);
         
         if (!professorName) {
             console.error("Missing professor name in request");
@@ -139,7 +140,7 @@ chrome.runtime.onMessage.addListener((message, sendResponse) => {
             return true;
         }
         
-        searchProfessor(professorName, schoolId, department)
+        searchProfessor(professorName, schoolID, department)
             .then(professorData => {
                 if (professorData) {
                     console.log(`Sending successful response for ${professorName}`);
@@ -162,21 +163,22 @@ chrome.runtime.onMessage.addListener((message, sendResponse) => {
                 });
             });
         
-        return true; // Return true to indicate we'll send a response asynchronously
+        return true; // indicates we send a response asynchronously
     }
     
     return false;
 });
 
-// Test the API on background script load
+// test api on background script load
+/*
 (async () => {
     console.log("Testing API connection...");
     try {
-        const testResult = await searchProfessor("K. Linton", UWO_SCHOOL_ID, "Anthropology");
-        console.log("Test API result:", testResult);
+        const testResult = await searchProfessor("K. Linton", encodeToBase64(UWO_SCHOOL_ID), "Anthropology");
     } catch (error) {
         console.error("Test API error:", error);
     }
 })();
+*/
 
 console.log("Background script loaded, listening.");
