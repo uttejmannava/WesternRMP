@@ -1,6 +1,6 @@
 # WesternRMP
 
-Chrome Web Store link coming soon.
+[Chrome Web Store listing!](https://chromewebstore.google.com/detail/westernrmp/kadicmbbohhejeaooldihbejljmghfbf)
 
 Chrome extension showing Rate My Professors information in Western University's DraftMySchedule.
 
