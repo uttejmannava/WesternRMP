@@ -4,6 +4,8 @@
 
 Chrome extension showing Rate My Professors information in Western University's DraftMySchedule.
 
+Thanks to Mohammad Mahfooz for the inspiration!
+
 ## Features
 
 - **Professor Ratings**: Displays professor ratings directly in DraftMySchedule.
