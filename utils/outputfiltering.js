@@ -12,27 +12,42 @@ const FACULTY_SUBJECT_MAP = {
 
 
 export const filterProfessorResults = (edges, professorName, targetDepartment) => {
-    const nameParts = professorName.split(/\s+/);
-    const targetLastName = nameParts[0].toLowerCase();
-    const targetFirstNameInitial = nameParts[1].charAt(0).toLowerCase();
-    
-    const filteredEdges = edges.filter(edge => {
-        const professor = edge.node;
-        
-        const professorLastName = professor.lastName.toLowerCase();
-        if (professorLastName !== targetLastName) return false;
-        
-        const professorFirstNameInitial = professor.firstName.charAt(0).toLowerCase();
-        if (targetFirstNameInitial && professorFirstNameInitial !== targetFirstNameInitial) return false;
-        
-        if (professor.department && !departmentIsCloseMatch(professor.department, targetDepartment)) {
-            return false;
-        }
-        
-        return true;
-    });
-    
-    return filteredEdges.length > 0 ? filteredEdges[0] : null;
+  const nameParts = professorName.trim().split(/\s+/);
+  if (nameParts.length < 2) return null;
+
+  const firstNameInitial = nameParts[nameParts.length - 1].charAt(0).toLowerCase();
+  const lastNameParts = nameParts.slice(0, -1).map(part => part.toLowerCase());
+  const fullLastName = lastNameParts.join(' ').toLowerCase();
+
+  let nameMatches = edges.filter(edge => {
+      const professor = edge.node;
+
+      const profFirstInitial = professor.firstName?.charAt(0).toLowerCase();
+      const profLastName = professor.lastName?.toLowerCase();
+
+      if (profFirstInitial !== firstNameInitial) return false;
+
+      if (fullLastName === profLastName) return true;
+
+      if (lastNameParts.includes(profLastName)) return true;
+
+      return false;
+  });
+
+  if (nameMatches.length === 1) {
+      return nameMatches[0];
+  }
+
+  if (nameMatches.length > 1) {
+      const deptMatches = nameMatches.filter(edge =>
+          edge.node.department && departmentIsCloseMatch(edge.node.department, targetDepartment)
+      );
+      if (deptMatches.length > 0) {
+          return deptMatches[0];
+      }
+  }
+
+  return nameMatches.length > 0 ? nameMatches[0] : null;
 };
 
 export const departmentIsCloseMatch = (professorDepartment, targetDepartment) => {
